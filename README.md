@@ -13,4 +13,5 @@ A Gradio app to easily compare DIFT vs. OmniMotion tracking.
     3. Generate two videos with tracking visualizations: OmniMotion and DIFT
 ## 🗃️ Backlog
 - Start and monitor your own OmniMotion optimizations in a separate tab
-- add linear interpolation for occlusions
+- add linear interpolation to DIFT for occlusions
+
