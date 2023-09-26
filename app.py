@@ -1,77 +1,83 @@
-import os
+# required paths 
 DIFT_DIR = '/export/home/mandreev/dift/src/models'
 DIFT_VIDEO_DIR = '/export/home/mandreev/dift-video/src'
 OMNIMOTION_DIR = '/export/home/mandreev/omnimotion'
-VIDEOS_DIR = '/export/home/mandreev/midres'
-
 
 import sys
 sys.path.append(DIFT_DIR)
 sys.path.append(DIFT_VIDEO_DIR)
 sys.path.append(OMNIMOTION_DIR)
+from src.examples import examples, DEFAULT_VIDEO_PATH
 
-from keypoint_extractor import KeypointExtractor
-from gpu_utils import get_suitable_device
-
-from utils import load_video_as_frames, draw_keypoints_on_frames, save_frames_as_video
-
-video_paths = [os.path.join(VIDEOS_DIR, f) for f in os.listdir(VIDEOS_DIR) if f.endswith('.mp4')]
-video_path_to_prompt_map = {
-    'bmx_short': 'a bmx biker in a skatepark',
-    'cat_grass': 'a cat in grass',
-    'cat_walk': 'a cat on the floor outside',
-    'dancers_short': 'dancers performing a dance inside a room',
-    'monkey_short': 'a small monkey eating a banana',
-    'soccer_short': 'a soccer player kicking a ball',
-    'violin': 'a violinist playing a violin outside in a jacket'
-}
-def get_basename(fpath):
-    return os.path.basename(fpath).split('.')[0]
-examples = [
-    [video_paths[i], video_path_to_prompt_map[get_basename(video_paths[i])], 1, 261] for i in range(len(video_paths))
-]
-
-DEFAULT_VIDEO_PATH = os.path.join(VIDEOS_DIR, 'bmx_short.mp4')
-
-
+# packages
 import numpy as np
 import gradio as gr
+import math
+from PIL import Image
+from src.common_inputs import pick_source_frame, pick_keypoints
 
+# tracker implementations
+from trackers.dift import DIFTTracker
+from trackers.omnimotion import OmniMotionTracker
+trackers = [
+    DIFTTracker(),
+    OmniMotionTracker()
+]
 
+tracker_custom_inputs_counts = {}
 
-dift_extractor = None
-def dift_track(video_path, prompt, layer=1, step=261,progress=gr.Progress()):
-
-    global dift_extractor
-    if not dift_extractor:
-        dift_extractor = KeypointExtractor(device='cuda:1')
-
-    progress(0.1, desc='Tracking keypoints for each frame')
-    print(f'⌛ Tracking keypoints for {video_path}...')
-    frames = load_video_as_frames(video_path)
-    keypoints = dift_extractor.track_keypoints(frames[:10], prompt=prompt, source_frame_idx=0, grid_size=10)
-    print(f'✅ Done tracking keypoints for {video_path}.')
-
-    progress(0.5, desc='Drawing keypoints on frames')
-    print(f'⌛ Drawing keypoints on frames for {video_path}...')
-    frames_with_dots = draw_keypoints_on_frames(frames, keypoints)
-    print(f'✅ Done drawing keypoints on frames for {video_path}.')
-
-    progress(0.8, desc='Saving frames with keypoints to video')
-    print(f'⌛ Saving frames with keypoints to video for {video_path}...')
-    video_path = f'{video_path.split(".")[0]}_tracked.mp4'
-    save_frames_as_video(frames_with_dots, video_path)
-    print(f'✅ Done saving frames with keypoints to video for {video_path}.')
+# tracks a video with all trackers
+def track(video_path, keypoints, source_frame_percentage, *custom_inputs) -> list:
+    print(video_path, keypoints, source_frame_percentage, custom_inputs)
     
-    progress(1.0, desc='Done!')
-    print(video_path)
-    return video_path
+    _tracker_outputs = []
+    custom_inputs_offset = 0
+    for i, tracker in enumerate(trackers):
+        custom_inputs_count = tracker_custom_inputs_counts[tracker.name]
+        tracker_custom_inputs = custom_inputs[custom_inputs_offset:custom_inputs_offset+custom_inputs_count]
+        custom_inputs_offset += custom_inputs_count
+        tracker_output = tracker.track(video_path, keypoints, source_frame_percentage, tracker_custom_inputs)
+        # tracker_output = '/export/home/mandreev/dift-video/test.webm'
+        _tracker_outputs.append(tracker_output)
 
-video_input = gr.Video(default=DEFAULT_VIDEO_PATH, label="Video")
-prompt_input = gr.Textbox(placeholder="Enter a prompt here...", default="a bmx biker in a skatepark")
-layer_input = gr.Number(default=1, label="UNet Layer")
-step_input = gr.Number(default=261, label="Timestep")
+    return _tracker_outputs
 
-demo = gr.Interface(dift_track, [video_input, prompt_input, layer_input, step_input], "playable_video", examples=examples)
+# UI
+with gr.Blocks(css="footer {visibility: hidden}") as demo:
+    keypoints = gr.State(value=[])
+    with gr.Row():
+        with gr.Column():
+            video_input = gr.Video(value=examples[0][0], label="Video")
+            picked_frame = gr.Image(label="Source Frame", interactive=False)
 
-demo.queue().launch()
+            # when a source time is inputted, populate the picked frame with the frame at that time
+            source_time_input = gr.Slider(minimum=0, default=0, maximum=1, label="Pick source frame", interactive=True)
+            source_time_input.release(pick_source_frame, [video_input,source_time_input], [picked_frame, keypoints])
+            
+            # when a video is uploaded, populate the picked frame with the first frame
+            video_input.change(pick_source_frame, [video_input, source_time_input], [picked_frame, keypoints])
+
+            # when the frame is clicked, pick the keypoint
+            picked_frame.select(pick_keypoints, [picked_frame, keypoints], [picked_frame, keypoints])
+
+            tracker_inputs_list = []
+            
+            for tracker in trackers:
+                with gr.Accordion(f"{tracker.name} Inputs"):
+                    custom_inputs = tracker.get_custom_inputs()
+                    tracker_inputs_list.extend(custom_inputs)
+                    tracker_custom_inputs_counts[tracker.name] = len(custom_inputs)
+            
+        with gr.Column():
+            tracker_outputs = [gr.Video(label=f"{tracker.name} Output") for tracker in trackers]
+            generate_button = gr.Button(label="Generate")
+
+
+            generate_button.click(track, [video_input, keypoints, source_time_input, *tracker_inputs_list], tracker_outputs)
+
+
+
+    # # gr.Markdown("## Video Examples")
+    # gr.Examples(examples, label="Examples", inputs=[video_input, prompt_input, layer_input, step_input])
+
+demo.launch()
