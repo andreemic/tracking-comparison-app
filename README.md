@@ -1,7 +1,8 @@
 A Gradio app to easily compare DIFT vs. OmniMotion tracking. 
 # Features
 ## ✅ Done
-∅
+- "Tracker" abstract class that allows to add new methods easily and declare their required parameters
+- Source frame + keypoints selection UI
 ## ⌛ WIP
 - Play with pre-defined videos
     1. Select a video from the ones that have been optimized using OmniMotion (fixed set of videos)
