@@ -40,9 +40,12 @@ def pick_keypoints(source_frame_img, keypoints, evt: gr.SelectData):
         'kp_id': get_new_keypoint_id(keypoints),
         'idx': len(keypoints),
     }
-    keypoints.append(new_keypoint_dict)
+    
 
     frame_with_keypoint = source_frame_img.copy()
-    frame_with_keypoint = draw_keypoint_on_frame(frame_with_keypoint, new_keypoint_dict, style='cross', color="auto", radius=6)
+    frame_with_keypoint, keypoint_color = draw_keypoint_on_frame(frame_with_keypoint, new_keypoint_dict, style='cross', color="auto", radius=6)
+
+    new_keypoint_dict['color'] = keypoint_color
+    keypoints.append(new_keypoint_dict)
 
     return [frame_with_keypoint, keypoints]
