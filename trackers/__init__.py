@@ -20,7 +20,7 @@ class Tracker(ABC):
         pass
     
     @abstractmethod
-    def track(self, video_path, keypoints, source_frame_percentage, custom_inputs) -> str:
+    def track(self, frames, existing_video_basename, keypoints, source_frame_idx, custom_inputs, device="cuda:0") -> str:
         """Abstract method to perform tracking"""
         pass
 
