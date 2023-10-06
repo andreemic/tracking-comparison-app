@@ -1,0 +1,6 @@
+*.webm
+*.mp4
+*.pyc
+*.npy
+*.npz
+__pycache__
