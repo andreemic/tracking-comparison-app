@@ -17,7 +17,7 @@ def pick_source_frame(video_path, source_time_percentage):
     frame = frames[source_frame_idx]
     
     print(frame)
-    return [frame, frame, []]
+    return [frame, frame, [], frame]
 
 
 def get_new_keypoint_id(keypoints):
@@ -55,8 +55,8 @@ def pick_keypoints(source_frame_img, keypoints, evt: gr.SelectData):
 # how many points a grid should have across the entire frame
 GRID_WIDTH = 30
 GRID_HEIGHT = 30
-def generate_keypoints_from_mask(picked_frame, picked_frame_mask, keypoints, **args):
-    print(picked_frame_mask['mask'][0][0],  args)
+def generate_keypoints_from_mask(picked_frame, picked_frame_mask, keypoints, picked_frame_clean, **args):
+    print(picked_frame_mask['mask'].shape,  args)
 
     h, w, _ = picked_frame.shape
 
@@ -81,7 +81,8 @@ def generate_keypoints_from_mask(picked_frame, picked_frame_mask, keypoints, **a
                 }
                 keypoints.append(new_keypoint_dict)
                 frame_with_keypoints, keypoint_color = draw_keypoint_on_frame(frame_with_keypoints, new_keypoint_dict, style='cross', color="auto", radius=6)
-
+    if len(keypoints) == 0:
+        return [picked_frame_clean, keypoints]
 
     return [frame_with_keypoints, keypoints]
 

@@ -63,11 +63,18 @@ def track(video_path, existing_video_basename, keypoints, source_frame_percentag
             i = future_to_output[future]
             try:
                 out_video_path = future.result()
-                _tracker_outputs.append(out_video_path)
+                _tracker_outputs.append({
+                    "tracker_name": trackers[i].name,
+                    "out_video_path": out_video_path
+                })
             except Exception as exc:
                 print(f'Tracker {i} generated an exception: {str(exc)}')
 
-    tracker_output = _tracker_outputs
+    # sort outputs so that they match tracker order
+    tracker_names = [tracker.name for tracker in trackers]
+    _tracker_outputs = sorted(_tracker_outputs, key=lambda x: tracker_names.index(x['tracker_name']))
+    
+    tracker_output = list(map(lambda x: x['out_video_path'], _tracker_outputs))
     if len(_tracker_outputs) == 1:
         tracker_output = _tracker_outputs[0]
 
@@ -76,6 +83,7 @@ def track(video_path, existing_video_basename, keypoints, source_frame_percentag
 # UI
 with gr.Blocks(css="footer {visibility: hidden}") as demo:
     keypoints = gr.State(value=[])
+    picked_frame_clean = gr.State(value=None)
     with gr.Row():
         with gr.Column():
             existing_video_select, video_input = pick_video_components()
@@ -85,20 +93,20 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
             # when a source time is inputted, populate the picked frame with the frame at that time
             with gr.Group():
                 source_time_input = gr.Slider(minimum=0, default=0, maximum=1, label="Pick source frame", interactive=True)
-                source_time_input.release(pick_source_frame, [video_input,source_time_input], [picked_frame, keypoints])
+                source_time_input.release(pick_source_frame, [video_input,source_time_input], [picked_frame, keypoints, picked_frame_clean])
                 with gr.Row():
                     from_frame = gr.Number(value=0, label="From")
                     to_frame = gr.Number(value=1, label="To")
                 
             
             # when a video is uploaded, populate the picked frame with the first frame
-            video_input.change(pick_source_frame, [video_input, source_time_input], [picked_frame, picked_frame_mask, keypoints])
+            video_input.change(pick_source_frame, [video_input, source_time_input], [picked_frame, picked_frame_mask, keypoints, picked_frame_clean])
 
             # when the frame is clicked, pick the keypoint
             picked_frame.select(pick_keypoints, [picked_frame, keypoints], [picked_frame, keypoints])
 
             # when a mask is drawn, convert it to keypoints
-            picked_frame_mask.edit(generate_keypoints_from_mask, [picked_frame, picked_frame_mask, keypoints], [picked_frame, keypoints])
+            picked_frame_mask.edit(generate_keypoints_from_mask, [picked_frame, picked_frame_mask, keypoints, picked_frame_clean], [picked_frame, keypoints])
 
             tracker_inputs_list = []
             
