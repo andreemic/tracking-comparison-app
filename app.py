@@ -16,6 +16,7 @@ import math
 from PIL import Image
 from src.common_inputs import pick_source_frame, pick_keypoints, pick_video_components,generate_keypoints_from_mask
 import concurrent.futures
+import traceback
 
 
 from utils import save_frames_as_video, load_video_as_frames
@@ -23,9 +24,11 @@ from utils import save_frames_as_video, load_video_as_frames
 # tracker implementations
 from trackers.dift import DIFTTracker
 from trackers.omnimotion import OmniMotionTracker
+from trackers.cotracker import CoTrackerTracker
 trackers = [
     DIFTTracker(),
-    OmniMotionTracker()
+    OmniMotionTracker(),
+    CoTrackerTracker()
 ]
 device = 'cuda:0'
 
@@ -42,13 +45,17 @@ def track(video_path, existing_video_basename, keypoints, source_frame_percentag
     _tracker_outputs = []
     custom_inputs_offset = 0
     
-    frames = load_video_as_frames(video_path)
+    frames = load_video_as_frames(video_path, max_dimension=640)
     source_frame_idx = math.floor(len(frames) * source_frame_percentage)
     start_frame_idx = math.floor(len(frames) * from_frame_percentage)
     end_frame_idx = math.floor(len(frames) * to_frame_percentage)
 
     frames = frames[start_frame_idx:end_frame_idx]
     
+    # compose existing_video_basename from video_path so we can cache uploaded videos by name (maybe a bad idea?)
+    if existing_video_basename is None:
+        existing_video_basename = video_path.split('/')[-1].split('.')[0]
+
     def track_and_save(i, tracker):
         custom_inputs_count = tracker_custom_inputs_counts[tracker.name]
         tracker_custom_inputs = custom_inputs[custom_inputs_offset:custom_inputs_offset+custom_inputs_count]
@@ -67,17 +74,23 @@ def track(video_path, existing_video_basename, keypoints, source_frame_percentag
                     "tracker_name": trackers[i].name,
                     "out_video_path": out_video_path
                 })
-            except Exception as exc:
-                print(f'Tracker {i} generated an exception: {str(exc)}')
+            except Exception as e:
+                _tracker_outputs.append({
+                    "tracker_name": trackers[i].name,
+                    "out_video_path": None
+                })
+                print(f'Tracker {i} generated an exception: {str(e)}')
+                traceback.print_exc()
 
     # sort outputs so that they match tracker order
     tracker_names = [tracker.name for tracker in trackers]
     _tracker_outputs = sorted(_tracker_outputs, key=lambda x: tracker_names.index(x['tracker_name']))
     
     tracker_output = list(map(lambda x: x['out_video_path'], _tracker_outputs))
-    if len(_tracker_outputs) == 1:
-        tracker_output = _tracker_outputs[0]
 
+    #
+
+    print(f'Returning tracker output: {tracker_output}')
     return [*tracker_output, source_time_input, from_frame, to_frame, picked_frame]
 
 # UI

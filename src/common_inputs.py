@@ -5,7 +5,13 @@ import math
 from utils import draw_keypoint_on_frame
 
 def pick_source_frame(video_path, source_time_percentage):
-    frames = load_video_as_frames(video_path, fps=24)
+    print(f'[pick_source_frame] video_path={video_path}, source_time_percentage={source_time_percentage}')
+    if video_path is None:
+        return [None, None, [], None]
+    frames = load_video_as_frames(video_path, fps=24, max_dimension=640)
+
+    if len(frames) == 0:
+        return [None, None, [], None]
 
     duration_s = len(frames) / 24
 
@@ -16,7 +22,7 @@ def pick_source_frame(video_path, source_time_percentage):
     
     frame = frames[source_frame_idx]
     
-    print(frame)
+    print(f'[pick_source_frame] picked frame {source_frame_idx} of {len(frames)}')
     return [frame, frame, [], frame]
 
 
@@ -104,11 +110,11 @@ def pick_video_components():
         with gr.Accordion("Watch or upload new video", open=False):
             video_input = gr.Video(value=video_paths[0], label="Input video")
 
-            video_input.upload(
-                fn=lambda video_input: None,
-                inputs=[video_input],
-                outputs=[existing_video_select]
-            )
+            # video_input.upload(
+            #     fn=lambda video_input: None,
+            #     inputs=[video_input],
+            #     outputs=[existing_video_select]
+            # )
             video_input.clear(
                 fn=lambda video_input: None,
                 inputs=[video_input],
