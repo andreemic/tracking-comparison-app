@@ -1,8 +1,8 @@
-from utils import load_video_as_frames, load_video_as_frames
+from src.trackers.dift.dift_video.src.utils import load_video_as_frames, load_video_as_frames
 from PIL import Image
 import gradio as gr
 import math
-from utils import draw_keypoint_on_frame
+from src.trackers.dift.dift_video.src.utils import draw_keypoint_on_frame
 
 def pick_source_frame(video_path, source_time_percentage):
     print(f'[pick_source_frame] video_path={video_path}, source_time_percentage={source_time_percentage}')
@@ -78,6 +78,8 @@ def generate_keypoints_from_mask(picked_frame, picked_frame_mask, keypoints, pic
         for j in range(GRID_HEIGHT):
             x = math.floor(i * w / GRID_WIDTH)
             y = math.floor(j * h / GRID_HEIGHT)
+
+            print(f'i={i}, j={j}, x={x}, y={y}')
             if mask[y][x] == 1:
                 new_keypoint_dict = {
                     'x': x,

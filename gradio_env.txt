@@ -1,0 +1,49 @@
+Gradio Environment Information:
+------------------------------
+Operating System: Linux
+gradio version: 3.43.2
+gradio_client version: 0.5.0
+
+------------------------------------------------
+gradio dependencies in your environment:
+
+aiofiles: 23.2.1
+altair: 5.1.1
+fastapi: 0.103.1
+ffmpy: 0.3.1
+gradio-client==0.5.0 is not installed.
+httpx: 0.25.0
+huggingface-hub: 0.17.2
+importlib-resources: 6.0.1
+jinja2: 3.1.2
+markupsafe: 2.1.2
+matplotlib: 3.8.0
+numpy: 1.25.2
+orjson: 3.9.7
+packaging: 23.1
+pandas: 2.1.0
+pillow: 10.0.1
+pydantic: 2.3.0
+pydub: 0.25.1
+python-multipart: 0.0.6
+pyyaml: 6.0
+requests: 2.29.0
+semantic-version: 2.10.0
+typing-extensions: 4.7.1
+uvicorn: 0.23.2
+websockets: 11.0.3
+authlib; extra == 'oauth' is not installed.
+itsdangerous; extra == 'oauth' is not installed.
+
+
+gradio_client dependencies in your environment:
+
+fsspec: 2023.9.1
+httpx: 0.25.0
+huggingface-hub: 0.17.2
+packaging: 23.1
+requests: 2.29.0
+typing-extensions: 4.7.1
+websockets: 11.0.3
+
+
