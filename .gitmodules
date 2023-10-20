@@ -2,5 +2,8 @@
 	path = src/co-tracker
 	url = https://github.com/facebookresearch/co-tracker.git
 [submodule "dependencies/dift-video"]
-	path = dependencies/dift-video
+	path = src/trackers/dift/dift_video
+	url = https://github.com/andreemic/dift-video.git
+[submodule "src/trackers/dift/dift-video"]
+	path = src/trackers/dift/dift-video
 	url = https://github.com/andreemic/dift-video.git
