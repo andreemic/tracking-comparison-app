@@ -1,3 +1,6 @@
 [submodule "src/co-tracker"]
 	path = src/co-tracker
 	url = https://github.com/facebookresearch/co-tracker.git
+[submodule "dependencies/dift-video"]
+	path = dependencies/dift-video
+	url = https://github.com/andreemic/dift-video.git
