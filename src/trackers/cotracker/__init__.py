@@ -8,7 +8,7 @@ sys.path.append("./src/trackers/cotracker/co-tracker")
 from cotracker.utils.visualizer import Visualizer, read_video_from_path
 
 import gradio as gr
-from . import Tracker
+from .. import Tracker
 
 from gpu_utils import get_suitable_device
 from src.trackers.dift.dift_video.src.utils import save_frames_as_video, draw_keypoints_on_frames, load_video_as_frames

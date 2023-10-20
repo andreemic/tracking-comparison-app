@@ -5,7 +5,7 @@ from gpu_utils import get_suitable_device
 from .dift_video.src.performance import PerformanceManager
 
 from trackers.dift.dift_video.src.keypoint_extractor import KeypointExtractor
-from trackers.dift.dift_video.utils import save_frames_as_video, draw_keypoints_on_frames, load_video_as_frames
+from trackers.dift.dift_video.src.utils import save_frames_as_video, draw_keypoints_on_frames, load_video_as_frames
 
 import math
 dift_extractor = None
